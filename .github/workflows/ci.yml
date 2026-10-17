@@ -1,0 +1,61 @@
+# Starter CI: the files install and parse on the supported Node versions, and they are byte-identical
+# to the create-agent template in w1991e/sess-sdk (the single source; check-parity.mjs there).
+# No secrets: nothing here calls Sess or the weather services.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.14.0', '24']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install exactly as the README says
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Every file parses and the SDK loads
+        run: |
+          node --check agent.mjs
+          node --check weather.mjs
+          node --input-type=module -e "const m = await import('@sess.si/sdk'); if (typeof m.Sess !== 'function') process.exit(1);"
+      - name: Without a key the agent stops with its message, before any request
+        run: |
+          set +e
+          out=$(env -u SESS_API_KEY node agent.mjs 2>&1); code=$?
+          set -e
+          echo "$out"
+          [ "$code" = 1 ] && [ "$out" = "Set SESS_API_KEY in your environment first." ]
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: starter
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: w1991e/sess-sdk
+          ref: master
+          path: sess-sdk
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Byte parity with the create-agent template at sess-sdk master
+        run: node sess-sdk/create-agent/scripts/check-parity.mjs starter
