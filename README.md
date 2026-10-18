@@ -1,13 +1,13 @@
 # Your first Sess agent
 
-This agent asks you two questions on your phone, plans your weekend on the real forecast. Each answer
-comes with a signed receipt.
+This agent asks you two questions on your phone and plans your weekend on the real forecast, with a
+signed receipt for each answer.
 
 **Install:** `npm install --ignore-scripts`
 
 **Run** (with `SESS_API_KEY` and `SESS_DEMO_CONTACT` set in your environment): `npm start`
 
-**What you'll see:** a private link. Open it on your phone, answer two questions, and your plan
+**What you'll see:** a Sess link to open on your phone; answer its two questions and your plan
 prints here, ending with `verified ✓`.
 
 ## Details
@@ -35,7 +35,7 @@ The flow is in [agent.mjs](agent.mjs); the weather, the plan rule and their attr
 [weather.mjs](weather.mjs).
 
 1. Creates a Sess Session asking where (a city from a short list) and which day (Saturday or Sunday).
-2. Prints the private link. Anyone holding it can answer, so keep it to yourself.
+2. Prints the Sess link. Anyone holding it can answer, so keep it to yourself.
 3. Waits for your answer and verifies its signed receipt.
 4. Reads the forecast for that city from MET Norway and, for US cities, active alerts from the US
    National Weather Service.
